@@ -1,0 +1,25 @@
+# Entorno virtual de Python
+.venv/
+env/
+
+# Caché de Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# R
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+
+# Datos: microdatos crudos y base procesada (se generan, no se versionan)
+data/
+*.rds
+*.sav
+version.json
+version_*.json
+
+# Scripts locales de arranque (no se suben; en el repo va la guía del README)
+*.bat

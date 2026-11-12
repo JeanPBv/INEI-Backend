@@ -1,0 +1,89 @@
+# Catálogo de indicadores ENAHO (Vivienda + Sumaria).
+# Cada indicador se define una sola vez. Para agregar uno nuevo, añádelo aquí.
+#   type        : proporcion | promedio | total
+#   weight_unit : hogar (peso factor07) | persona (peso factor07*mieperho)
+#   format      : porcentaje | soles | conteo
+#   crossable   : true si puede cruzarse con condición de pobreza
+#   levels_allowed: niveles de inferencia publicables para el indicador
+version: "1.0"
+indicators:
+
+  pobreza_total:
+    title: "Incidencia de pobreza monetaria total"
+    description: "Porcentaje de personas en situacion de pobreza monetaria"
+    module: sumaria
+    variable: pobre_total
+    type: proporcion
+    weight_unit: persona
+    format: porcentaje
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - Informe tecnico: Evolucion de la Pobreza Monetaria 2024"
+
+  pobreza_extrema:
+    title: "Incidencia de pobreza monetaria extrema"
+    description: "Porcentaje de personas en situacion de pobreza extrema"
+    module: sumaria
+    variable: pobre_extremo
+    type: proporcion
+    weight_unit: persona
+    format: porcentaje
+    levels_allowed: [nacional, area, region_natural]
+    official_source: "INEI - Informe tecnico: Evolucion de la Pobreza Monetaria 2024"
+
+  gasto_pc:
+    title: "Gasto per capita mensual promedio"
+    description: "Gasto per capita mensual promedio (nominal, soles corrientes)"
+    module: sumaria
+    variable: gpc_mensual
+    type: promedio
+    weight_unit: persona
+    format: soles
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - ENAHO (gasto real requiere deflactor espacial, ver nota)"
+
+  agua_red_publica:
+    title: "Hogares con agua por red publica"
+    description: "Porcentaje de hogares que se abastecen de agua por red publica"
+    module: vivienda
+    variable: agua_red
+    type: proporcion
+    weight_unit: hogar
+    format: porcentaje
+    crossable: true
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - Formas de Acceso al Agua y Saneamiento"
+
+  desague_red_publica:
+    title: "Hogares con desague por red publica"
+    description: "Porcentaje de hogares con servicio higienico conectado a red publica"
+    module: vivienda
+    variable: desague_red
+    type: proporcion
+    weight_unit: hogar
+    format: porcentaje
+    crossable: true
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - Formas de Acceso al Agua y Saneamiento"
+
+  electricidad:
+    title: "Hogares con alumbrado electrico"
+    description: "Porcentaje de hogares con alumbrado por red electrica"
+    module: vivienda
+    variable: electricidad
+    type: proporcion
+    weight_unit: hogar
+    format: porcentaje
+    crossable: true
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - Condiciones de vida"
+
+  total_hogares:
+    title: "Numero total de hogares"
+    description: "Estimacion del total de hogares"
+    module: vivienda
+    variable: unos
+    type: total
+    weight_unit: hogar
+    format: conteo
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - ENAHO"

@@ -1,0 +1,7 @@
+# API del servicio ENAHO (FastAPI). El cálculo lo hace R (paquete survey).
+fastapi>=0.115
+uvicorn[standard]>=0.32
+pyyaml>=6.0
+# rpy2 : puente en PROCESO a R (opcional). En Windows suele NO instalar;
+#        si falta, el back usa automáticamente el modo subprocess (Rscript).
+#        Para intentarlo:  pip install rpy2
