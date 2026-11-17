@@ -9,9 +9,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       python3 python3-pip python3-venv \
   && rm -rf /var/lib/apt/lists/*
 
-# Paquetes de R: survey/jsonlite/yaml los usa la API en cada consulta.
-# (haven y dplyr no hacen falta en runtime, pero los dejamos por si se prepara data.)
-RUN install2.r --error --skipinstalled survey jsonlite yaml
+# Paquetes de R que la API usa en cada consulta: survey/jsonlite/yaml y, además,
+# haven/dplyr porque R/utils.R los carga al sourcearse el motor en runtime.
+RUN install2.r --error --skipinstalled survey jsonlite yaml haven dplyr
 
 WORKDIR /app
 
