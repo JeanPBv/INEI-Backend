@@ -1,0 +1,15 @@
+# Lo que NO entra a la imagen (más liviana y limpia).
+# OJO: NO excluimos data/processed/ — esos .rds SÍ se hornean en la imagen.
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.bat
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+.git/
+.gitignore
+README.md

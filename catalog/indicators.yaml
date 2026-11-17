@@ -87,3 +87,48 @@ indicators:
     format: conteo
     levels_allowed: [nacional, area, region_natural, departamento]
     official_source: "INEI - ENAHO"
+
+  # --- Indicadores a nivel de PERSONA (base: persona) -----------------------
+  # Cada uno sale de su módulo y usa su propio factor de expansión (weight_var).
+
+  analfabetismo:
+    title: "Tasa de analfabetismo (15 y mas)"
+    description: "Porcentaje de personas de 15 y mas años que no saben leer ni escribir"
+    module: educacion
+    base: persona
+    variable: analfabeto
+    type: proporcion
+    weight_unit: persona
+    weight_var: w_edu
+    format: porcentaje
+    crossable: true
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - ENAHO Modulo 300 (Educacion)"
+
+  seguro_salud:
+    title: "Poblacion con seguro de salud"
+    description: "Porcentaje de personas afiliadas a algun seguro de salud"
+    module: salud
+    base: persona
+    variable: con_seguro
+    type: proporcion
+    weight_unit: persona
+    weight_var: w_salud
+    format: porcentaje
+    crossable: true
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - ENAHO Modulo 400 (Salud)"
+
+  tasa_ocupacion:
+    title: "Tasa de ocupacion (PET 14 y mas)"
+    description: "Porcentaje de ocupados respecto a la poblacion en edad de trabajar"
+    module: empleo
+    base: persona
+    variable: ocupado
+    type: proporcion
+    weight_unit: persona
+    weight_var: w_empleo
+    format: porcentaje
+    crossable: true
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - ENAHO Modulo 500 (Empleo)"

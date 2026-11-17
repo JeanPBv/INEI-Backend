@@ -3,10 +3,21 @@
 suppressWarnings(suppressMessages(library(survey)))
 options(survey.lonely.psu = "adjust")
 
-# Diseño muestral con el peso que corresponde: persona usa w_per y hogar usa w_hog.
-.design <- function(base, unit) {
-  weight <- if (unit == "persona") ~w_per else ~w_hog
-  svydesign(ids = ~conglome, strata = ~estrato, weights = weight, data = base, nest = TRUE)
+# Columna de peso del indicador. `weight_var` (si existe) la nombra directamente;
+# si no, cae al peso de hogar o persona de la base principal.
+.weight_var <- function(def) {
+  if (!is.null(def$weight_var)) def$weight_var
+  else if (identical(def$weight_unit, "persona")) "w_per"
+  else "w_hog"
+}
+
+# Diseño muestral con el peso del indicador. Se descartan las filas sin peso, que es
+# como cada módulo de persona define su universo (p. ej. PET para empleo).
+.design <- function(base, def) {
+  wv <- .weight_var(def)
+  base <- base[!is.na(base[[wv]]), ]
+  svydesign(ids = ~conglome, strata = ~estrato,
+            weights = as.formula(paste0("~", wv)), data = base, nest = TRUE)
 }
 
 # Arma una fila de resultado a partir de la estimación y su error estándar.
@@ -31,7 +42,7 @@ estimate <- function(base, def, level_key) {
   lvl  <- LEVELS[[level_key]]
   yvar <- def$variable
   f    <- as.formula(paste0("~", yvar))
-  dsn  <- .design(base, def$weight_unit)
+  dsn  <- .design(base, def)
   FUN  <- if (def$type == "total") svytotal else svymean
 
   if (is.null(lvl$group)) {
@@ -64,7 +75,7 @@ crosstab <- function(base, def, level_key = "nacional", cross_by = "pobreza") {
                              levels = c("Pobre extremo","Pobre no extremo","No pobre"))
   yvar <- def$variable
   f    <- as.formula(paste0("~", yvar))
-  dsn  <- .design(base, def$weight_unit)
+  dsn  <- .design(base, def)
   lvl  <- LEVELS[[level_key]]
 
   groups <- c("pobreza_lbl", lvl$group)
