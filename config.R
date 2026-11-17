@@ -21,9 +21,16 @@ REF_YEAR <- 2024
 housing_sav <- function(year) file.path(RAW_DATA_DIR, year, "Vivienda", sprintf("Enaho01-%s-100.sav", year))
 summary_sav <- function(year) file.path(RAW_DATA_DIR, year, "Sumaria",  sprintf("Sumaria-%s.sav", year))
 
+# Módulos a nivel de persona (opcionales). Cada uno trae su propio factor de expansión.
+roster_sav <- function(year) file.path(RAW_DATA_DIR, year, "Sexo",       sprintf("Enaho01-%s-200.sav", year))   # 200 miembros del hogar
+edu_sav    <- function(year) file.path(RAW_DATA_DIR, year, "Educación", sprintf("Enaho01A-%s-300.sav", year)) # 300 educación
+health_sav <- function(year) file.path(RAW_DATA_DIR, year, "Salud",      sprintf("Enaho01A-%s-400.sav", year))  # 400 salud
+emp_sav    <- function(year) file.path(RAW_DATA_DIR, year, "Empleo",     sprintf("Enaho01A-%s-500.sav", year))  # 500 empleo
+
 # Salidas ya procesadas: un .rds y un version_<año>.json por cada año.
 PROCESSED_DIR <- file.path(BACK_ROOT, "data", "processed")
 dataset_rds  <- function(year) file.path(PROCESSED_DIR, sprintf("enaho_%s_viv_sum.rds", year))
+person_rds   <- function(year) file.path(PROCESSED_DIR, sprintf("enaho_%s_persona.rds", year))
 version_json <- function(year) file.path(PROCESSED_DIR, sprintf("version_%s.json", year))
 
 CATALOG_YAML <- file.path(BACK_ROOT, "catalog", "indicators.yaml")
