@@ -118,31 +118,34 @@ class REngine:
             self.mode = "subprocess"
             self.detail = f"subprocess por consulta (worker no disponible: {type(e).__name__})"
 
-    def _run(self, kind, indicator="", level="nacional", cross_by="pobreza", year=None, subgroup=""):
+    def _run(self, kind, indicator="", level="nacional", cross_by="pobreza", year=None,
+             subgroup="", cross_value=""):
         y = "" if year is None else str(int(year))
-        key = (kind, indicator, level, cross_by, y, subgroup)
+        key = (kind, indicator, level, cross_by, y, subgroup, cross_value)
         with self._cache_lock:
             if key in self._cache:
                 return self._cache[key]
-        result = self._exec(kind, indicator, level, cross_by, y, subgroup)
+        result = self._exec(kind, indicator, level, cross_by, y, subgroup, cross_value)
         with self._cache_lock:
             if len(self._cache) < CACHE_MAX:
                 self._cache[key] = result
         return result
 
-    def _exec(self, kind, indicator, level, cross_by, y, subgroup):
+    def _exec(self, kind, indicator, level, cross_by, y, subgroup, cross_value=""):
         if self.mode == "rpy2":
             fn = self._robjects.globalenv["bridge_json"]
             args = [kind, indicator, level, cross_by]
             if y:
                 args.append(int(y))
-                if subgroup:
+                if subgroup or cross_value:
                     args.append(subgroup)
+                if cross_value:
+                    args.append(cross_value)
             return json.loads(str(fn(*args)[0]))
 
         if self.mode == "worker" and self.worker:
             req = {"kind": kind, "indicator": indicator, "level": level,
-                   "cross_by": cross_by, "subgroup": subgroup}
+                   "cross_by": cross_by, "subgroup": subgroup, "cross_value": cross_value}
             if y:
                 req["year"] = int(y)
             try:
@@ -154,7 +157,7 @@ class REngine:
         # Último recurso: un Rscript por consulta.
         try:
             p = subprocess.run(
-                [RSCRIPT, "r_bridge.R", kind, indicator, level, cross_by, y, subgroup],
+                [RSCRIPT, "r_bridge.R", kind, indicator, level, cross_by, y, subgroup, cross_value],
                 cwd=R_ROOT, capture_output=True, text=True, encoding="utf-8",
                 timeout=R_TIMEOUT,
             )
@@ -176,8 +179,10 @@ class REngine:
         return self._run("crosstab", indicator, level, cross_by, year=year)
 
     # Desglose por etiquetas de un indicador, en un subámbito opcional (drill-down).
-    def distribution(self, indicator, level, subgroup="", year=None):
-        return self._run("distribution", indicator, level, subgroup=subgroup, year=year)
+    # cross_value restringe además por condición de pobreza (drill-down del cruce).
+    def distribution(self, indicator, level, subgroup="", year=None, cross_value=""):
+        return self._run("distribution", indicator, level, subgroup=subgroup, year=year,
+                         cross_value=cross_value)
 
 
 engine = REngine()

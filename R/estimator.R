@@ -112,7 +112,10 @@ crosstab <- function(base, def, level_key = "nacional", cross_by = "pobreza") {
 # subámbito (p. ej. nivel "area" + subgroup "urbano"), restringe el cálculo a él;
 # así el drill-down "clic en Urbano -> categorías dentro de Urbano" es una sola
 # estimación con el mismo diseño muestral y el peso propio del indicador.
-distribution <- function(base, def, level_key = "nacional", subgroup = "") {
+# cross_value (opcional) restringe además por condición de pobreza, para el
+# drill-down de una celda del cruce (p. ej. "No pobre / Urbano" -> categorías
+# dentro de los hogares no pobres del área urbana).
+distribution <- function(base, def, level_key = "nacional", subgroup = "", cross_value = "") {
   catvar <- def$category_var
   if (is.null(catvar)) stop("El indicador no tiene desglose por categorias")
   lvl <- LEVELS[[level_key]]
@@ -121,6 +124,12 @@ distribution <- function(base, def, level_key = "nacional", subgroup = "") {
   if (!is.null(lvl$group) && nzchar(subgroup)) {
     col  <- as.character(base[[lvl$group]])
     base <- base[!is.na(col) & tolower(col) == tolower(subgroup), ]
+  }
+
+  # Restringe por condición de pobreza (celda del cruce), si se pide.
+  if (nzchar(cross_value)) {
+    pc   <- as.character(base$pobreza_lbl)
+    base <- base[!is.na(pc) & pc == cross_value, ]
   }
 
   wv   <- .weight_var(def)
