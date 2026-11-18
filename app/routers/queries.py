@@ -2,12 +2,33 @@
 from fastapi import APIRouter, HTTPException
 
 from app.settings import LEVELS, CV_THRESHOLD
-from app.catalog import CATALOG, levels_allowed
+from app.catalog import CATALOG, levels_allowed, UNIVERSE, weight_of
 from app.engine import engine
 from app.versions import meta
 from app.responses import normalize_level, validate_year, respond
 
 router = APIRouter()
+
+
+# Ejecuta una llamada al motor R y traduce sus fallos a códigos HTTP claros
+# en vez de un 500 genérico (timeout -> 504, sin datos -> 404, resto -> 502).
+def _engine(fn, *args, **kwargs):
+    try:
+        return fn(*args, **kwargs)
+    except TimeoutError as e:
+        raise HTTPException(504, {"error": "engine_timeout", "message": str(e)})
+    except RuntimeError as e:
+        msg = str(e)
+        if "No hay datos" in msg or "no data" in msg.lower():
+            raise HTTPException(404, {"error": "no_data", "message": msg})
+        raise HTTPException(502, {"error": "engine_error", "message": msg})
+
+
+def _check_format(fmt):
+    if (fmt or "json").lower() not in ("json", "csv"):
+        raise HTTPException(400, {"error": "invalid_format",
+                                  "message": f"Format '{fmt}' no soportado",
+                                  "formats": ["json", "csv"]})
 
 
 # Valida indicador + nivel + año y devuelve la clave de nivel y el año resueltos.
@@ -32,11 +53,14 @@ def _resolve(indicator, level, year):
 
 @router.get("/estimates")
 def estimates(indicator: str = "", level: str = "nacional", year: int = None, format: str = "json"):
+    _check_format(format)
     lv, y, allowed = _resolve(indicator, level, year)
     d = CATALOG[indicator]
-    data = engine.estimate(indicator, lv, y)
+    data = _engine(engine.estimate, indicator, lv, y)
     m = meta({"indicator": indicator, "title": d.get("title"), "level": lv, "year": y,
-              "type": d.get("type"), "unit": d.get("format"), "format": d.get("format"),
+              "type": d.get("type"), "formula": d.get("type"), "unit": d.get("format"),
+              "format": d.get("format"), "weight": weight_of(indicator),
+              "universe": UNIVERSE.get(indicator),
               "cross": None, "confidence_level": 0.95, "cv_threshold": CV_THRESHOLD,
               "levels_allowed": allowed,
               "note": "Estimates with CV>15% are flagged as unreliable"}, year=y)
@@ -49,12 +73,35 @@ def crosstabs(indicator: str = "", cross_by: str = "pobreza", level: str = "naci
     if indicator in CATALOG and not CATALOG[indicator].get("crossable"):
         raise HTTPException(400, {"error": "indicator_not_crossable",
                                   "message": f"Indicator '{indicator}' does not support crosstabs"})
+    _check_format(format)
     lv, y, _ = _resolve(indicator, level, year)
     d = CATALOG[indicator]
-    data = engine.crosstab(indicator, lv, cross_by, y)
+    data = _engine(engine.crosstab, indicator, lv, cross_by, y)
     m = meta({"indicator": indicator, "title": d.get("title"), "cross_by": cross_by,
               "level": lv, "year": y, "cross": cross_by, "unit": d.get("format"),
-              "format": d.get("format"), "confidence_level": 0.95,
-              "cv_threshold": CV_THRESHOLD,
+              "format": d.get("format"), "weight": weight_of(indicator),
+              "universe": UNIVERSE.get(indicator), "formula": d.get("type"),
+              "confidence_level": 0.95, "cv_threshold": CV_THRESHOLD,
               "note": "Estimates with CV>15% are flagged as unreliable"}, year=y)
+    return respond(data, m, format)
+
+
+@router.get("/distribution")
+def distribution(indicator: str = "", level: str = "nacional", subgroup: str = "",
+                 year: int = None, format: str = "json"):
+    _check_format(format)
+    lv, y, allowed = _resolve(indicator, level, year)
+    d = CATALOG[indicator]
+    if not d.get("category_var"):
+        raise HTTPException(400, {"error": "indicator_not_breakdownable",
+                                  "message": f"Indicator '{indicator}' has no category breakdown"})
+    data = _engine(engine.distribution, indicator, lv, subgroup, y)
+    m = meta({"indicator": indicator, "title": d.get("title"), "level": lv,
+              "subgroup": subgroup or None, "year": y, "breakdown": d.get("category_var"),
+              "rest_label": d.get("rest_label"), "weight": weight_of(indicator),
+              "universe": UNIVERSE.get(indicator),
+              "unit": "porcentaje", "format": "porcentaje", "confidence_level": 0.95,
+              "cv_threshold": CV_THRESHOLD,
+              "note": "Distribucion sobre las categorias de origen; CV>15% marcado como referencial"},
+             year=y)
     return respond(data, m, format)

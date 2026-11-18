@@ -4,6 +4,7 @@
 #   weight_unit : hogar (peso factor07) | persona (peso factor07*mieperho)
 #   format      : porcentaje | soles | conteo
 #   crossable   : true si puede cruzarse con condición de pobreza
+#   category_var: columna factor de la base para el desglose por etiquetas (drill-down)
 #   levels_allowed: niveles de inferencia publicables para el indicador
 version: "1.0"
 indicators:
@@ -13,6 +14,7 @@ indicators:
     description: "Porcentaje de personas en situacion de pobreza monetaria"
     module: sumaria
     variable: pobre_total
+    category_var: cat_pobreza
     type: proporcion
     weight_unit: persona
     format: porcentaje
@@ -24,6 +26,7 @@ indicators:
     description: "Porcentaje de personas en situacion de pobreza extrema"
     module: sumaria
     variable: pobre_extremo
+    category_var: cat_pobreza
     type: proporcion
     weight_unit: persona
     format: porcentaje
@@ -46,6 +49,8 @@ indicators:
     description: "Porcentaje de hogares que se abastecen de agua por red publica"
     module: vivienda
     variable: agua_red
+    category_var: cat_agua
+    rest_label: "Sin red pública"
     type: proporcion
     weight_unit: hogar
     format: porcentaje
@@ -58,6 +63,8 @@ indicators:
     description: "Porcentaje de hogares con servicio higienico conectado a red publica"
     module: vivienda
     variable: desague_red
+    category_var: cat_desague
+    rest_label: "Sin red pública"
     type: proporcion
     weight_unit: hogar
     format: porcentaje
@@ -70,6 +77,7 @@ indicators:
     description: "Porcentaje de hogares con alumbrado por red electrica"
     module: vivienda
     variable: electricidad
+    category_var: cat_electric
     type: proporcion
     weight_unit: hogar
     format: porcentaje
@@ -88,7 +96,7 @@ indicators:
     levels_allowed: [nacional, area, region_natural, departamento]
     official_source: "INEI - ENAHO"
 
-  # --- Indicadores a nivel de PERSONA (base: persona) -----------------------
+  # Indicadores a nivel de persona (base: persona).
   # Cada uno sale de su módulo y usa su propio factor de expansión (weight_var).
 
   analfabetismo:
@@ -97,6 +105,7 @@ indicators:
     module: educacion
     base: persona
     variable: analfabeto
+    category_var: cat_alfab
     type: proporcion
     weight_unit: persona
     weight_var: w_edu
@@ -125,6 +134,7 @@ indicators:
     module: empleo
     base: persona
     variable: ocupado
+    category_var: cat_ocupacion
     type: proporcion
     weight_unit: persona
     weight_var: w_empleo
@@ -132,3 +142,93 @@ indicators:
     crossable: true
     levels_allowed: [nacional, area, region_natural, departamento]
     official_source: "INEI - ENAHO Modulo 500 (Empleo)"
+
+  asistencia_secundaria:
+    title: "Tasa neta de asistencia a educacion secundaria (12-16 años)"
+    description: "Porcentaje de adolescentes de 12 a 16 años que asisten a educacion secundaria"
+    module: educacion
+    base: persona
+    variable: asiste_secundaria
+    category_var: cat_asis_sec
+    type: proporcion
+    weight_unit: persona
+    weight_var: w_sec
+    format: porcentaje
+    crossable: true
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - ENAHO Modulo 300 (Educacion)"
+
+  nivel_secundaria_completa:
+    title: "Poblacion con secundaria completa o mas (15 y mas)"
+    description: "Porcentaje de personas de 15 y mas años cuyo nivel educativo alcanzado es al menos secundaria completa"
+    module: educacion
+    base: persona
+    variable: sec_completa
+    category_var: cat_sec_comp
+    type: proporcion
+    weight_unit: persona
+    weight_var: w_edu
+    format: porcentaje
+    crossable: true
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - ENAHO Modulo 300 (Educacion), nivel educativo alcanzado P301A"
+
+  nivel_superior:
+    title: "Poblacion con educacion superior (15 y mas)"
+    description: "Porcentaje de personas de 15 y mas años con algun nivel de educacion superior (no universitaria o universitaria)"
+    module: educacion
+    base: persona
+    variable: edu_superior
+    category_var: cat_superior
+    type: proporcion
+    weight_unit: persona
+    weight_var: w_edu
+    format: porcentaje
+    crossable: true
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - ENAHO Modulo 300 (Educacion), nivel educativo alcanzado P301A"
+
+  problema_salud_cronico:
+    title: "Poblacion con algun problema de salud cronico"
+    description: "Porcentaje de personas que padecen de alguna enfermedad o malestar cronico"
+    module: salud
+    base: persona
+    variable: cronico
+    category_var: cat_cronico
+    type: proporcion
+    weight_unit: persona
+    weight_var: w_salud
+    format: porcentaje
+    crossable: true
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - ENAHO Modulo 400 (Salud)"
+
+  empleo_informal:
+    title: "Tasa de empleo informal"
+    description: "Porcentaje de la PEA ocupada con empleo informal (metodologia OIT/INEI)"
+    module: empleo
+    base: persona
+    variable: empleo_informal
+    category_var: cat_informal
+    type: proporcion
+    weight_unit: persona
+    weight_var: w_informal
+    format: porcentaje
+    crossable: true
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - ENAHO Modulo 500 (Empleo); empleo informal OIT 17a CIET"
+
+  tasa_desempleo:
+    title: "Tasa de desempleo (abierto)"
+    description: "Porcentaje de la PEA desocupada (busco trabajo activamente) respecto a la PEA; definicion OIT de desempleo abierto"
+    module: empleo
+    base: persona
+    variable: desempleo
+    category_var: cat_desempleo
+    type: proporcion
+    weight_unit: persona
+    weight_var: w_pea
+    format: porcentaje
+    crossable: true
+    levels_allowed: [nacional, area, region_natural, departamento]
+    official_source: "INEI - ENAHO Modulo 500 (Empleo); tasa de desempleo abierto OIT"

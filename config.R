@@ -14,7 +14,7 @@ BACK_ROOT <- .back_root
 RAW_DATA_DIR <- "C:/Users/Jean/Desktop/Proyecto INEI/Datos"
 
 # Años que maneja el servicio y año que se usa por defecto.
-AVAILABLE_YEARS <- c(2023, 2024, 2025)
+AVAILABLE_YEARS <- c(2021, 2022, 2023, 2024, 2025)
 REF_YEAR <- 2024
 
 # Rutas a los .sav de cada año. Vivienda es el módulo 01 y Sumaria el módulo 34.
@@ -22,7 +22,7 @@ housing_sav <- function(year) file.path(RAW_DATA_DIR, year, "Vivienda", sprintf(
 summary_sav <- function(year) file.path(RAW_DATA_DIR, year, "Sumaria",  sprintf("Sumaria-%s.sav", year))
 
 # Módulos a nivel de persona (opcionales). Cada uno trae su propio factor de expansión.
-roster_sav <- function(year) file.path(RAW_DATA_DIR, year, "Sexo",       sprintf("Enaho01-%s-200.sav", year))   # 200 miembros del hogar
+roster_sav <- function(year) file.path(RAW_DATA_DIR, year, "Miembros del Hogar", sprintf("Enaho01-%s-200.sav", year))   # 200 caracteristicas de los miembros del hogar
 edu_sav    <- function(year) file.path(RAW_DATA_DIR, year, "Educación", sprintf("Enaho01A-%s-300.sav", year)) # 300 educación
 health_sav <- function(year) file.path(RAW_DATA_DIR, year, "Salud",      sprintf("Enaho01A-%s-400.sav", year))  # 400 salud
 emp_sav    <- function(year) file.path(RAW_DATA_DIR, year, "Empleo",     sprintf("Enaho01A-%s-500.sav", year))  # 500 empleo

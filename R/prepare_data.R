@@ -20,14 +20,22 @@ prepare_base <- function(year = REF_YEAR) {
     result   = col_num(viv, "RESULT"),
     p110     = col_num(viv, "P110"),
     p111a    = col_num(viv, "P111A"),
-    p1121    = col_num(viv, "P1121")
+    p1121    = col_num(viv, "P1121"),
+    # Desglose = las categorías que DEFINEN el indicador (red pública) + "Sin red
+    # pública" como resto. Las del indicador suman el valor del titular.
+    cat_agua    = col_fct_sel(viv, "P110",  c(1, 2, 3), rest = "Sin red pública"),  # agua: {1,2,3} = red
+    cat_desague = col_fct_sel(viv, "P111A", c(1, 2),    rest = "Sin red pública")   # desagüe: {1,2} = red
   ) %>%
     filter(result %in% c(1, 2)) %>%
     mutate(
       agua_red      = na_si(p110  %in% c(1, 2, 3), p110),   # acceso a agua por red pública
       desague_red   = na_si(p111a %in% c(1, 2),    p111a),  # desagüe por red pública
       electricidad  = na_si(p1121 == 1,            p1121),  # alumbrado eléctrico
-      unos          = 1L                                     # sirve para contar hogares
+      unos          = 1L,                                    # sirve para contar hogares
+      # Desglose del indicador binario de electricidad (sí/no, con sus etiquetas).
+      cat_electric  = factor(ifelse(is.na(p1121), NA_character_,
+                             ifelse(p1121 == 1, "Con alumbrado eléctrico", "Sin alumbrado eléctrico")),
+                             levels = c("Con alumbrado eléctrico", "Sin alumbrado eléctrico"))
     )
 
   message("3/5  Estandarizando el modulo Sumaria...")
@@ -44,11 +52,16 @@ prepare_base <- function(year = REF_YEAR) {
     gashog2d = col_num(sum, "GASHOG2D")
   ) %>%
     mutate(
-      pobre_total   = as.integer(pobreza %in% c(1, 2)),
-      pobre_extremo = as.integer(pobreza == 1),
+      # Conserva los faltantes: un hogar sin dato de pobreza NO debe contar como
+      # "no pobre". (NA %in% c(1,2) daría FALSE/0; por eso el guardado explícito.)
+      pobre_total   = ifelse(is.na(pobreza), NA_integer_, as.integer(pobreza %in% c(1, 2))),
+      pobre_extremo = ifelse(is.na(pobreza), NA_integer_, as.integer(pobreza == 1)),
       gpc_mensual   = (gashog2d / mieperho) / 12,   # gasto per cápita mensual, en soles corrientes
       pobreza_lbl   = recode(pobreza, `1`="Pobre extremo", `2`="Pobre no extremo",
-                             `3`="No pobre", .default = NA_character_)
+                             `3`="No pobre", .default = NA_character_),
+      # Desglose de pobreza: las 3 categorías oficiales, en orden.
+      cat_pobreza   = factor(pobreza_lbl,
+                             levels = c("Pobre extremo", "Pobre no extremo", "No pobre"))
     )
 
   message("4/5  Uniendo los modulos por conglome, vivienda y hogar...")

@@ -15,9 +15,7 @@ args  <- commandArgs(trailingOnly = TRUE)
 years <- if (length(args)) as.integer(args) else AVAILABLE_YEARS
 
 for (y in years) {
-  message("\n===============================================")
-  message("  Preparando ENAHO ", y)
-  message("===============================================")
+  message("\n== Preparando ENAHO ", y, " ==")
   save_base(prepare_base(y), y)
 
   # Base de persona: solo si existen los módulos (educación, salud, empleo, padrón).

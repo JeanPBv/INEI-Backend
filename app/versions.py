@@ -6,6 +6,7 @@ from datetime import datetime
 
 from app.settings import PROCESSED_DIR
 from app.engine import engine
+from app.catalog import CATALOG_VERSION
 
 
 # Un version_<año>.json por año; version.json (sin año) se acepta por compatibilidad.
@@ -56,6 +57,8 @@ def meta(extra=None, year=None):
     base = {
         "source": "ENAHO", "year": y,
         "data_version": v.get("version"), "engine": engine.detail,
+        "catalog_version": CATALOG_VERSION,
+        "data_generated": v.get("generado"),   # fecha de procesamiento de la base
         "generated": datetime.now().isoformat(timespec="seconds"),
     }
     if extra:
