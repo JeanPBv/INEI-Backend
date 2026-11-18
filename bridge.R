@@ -15,7 +15,8 @@ get_base <- function(year, kind = "hogar") {
 
 # Devuelve el OBJETO R de la consulta (data.frame o lista), sin serializar.
 bridge_result <- function(kind, indicator = "", level = "nacional",
-                          cross_by = "pobreza", year = REF_YEAR, subgroup = "") {
+                          cross_by = "pobreza", year = REF_YEAR, subgroup = "",
+                          cross_value = "") {
   def <- .CAT[[indicator]]
   base_kind <- if (!is.null(def) && !is.null(def$base)) def$base else "hogar"
   switch(kind,
@@ -23,7 +24,7 @@ bridge_result <- function(kind, indicator = "", level = "nacional",
     "levels"       = valid_levels(),
     "estimate"     = estimate(get_base(year, base_kind), def, level),
     "crosstab"     = crosstab(get_base(year, base_kind), def, level, cross_by),
-    "distribution" = distribution(get_base(year, base_kind), def, level, subgroup),
+    "distribution" = distribution(get_base(year, base_kind), def, level, subgroup, cross_value),
     stop(paste("Tipo de consulta desconocido:", kind)))
 }
 

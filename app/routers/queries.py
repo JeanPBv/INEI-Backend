@@ -86,18 +86,32 @@ def crosstabs(indicator: str = "", cross_by: str = "pobreza", level: str = "naci
     return respond(data, m, format)
 
 
+# Condiciones de pobreza válidas para el drill-down de una celda del cruce.
+POVERTY_LABELS = {"Pobre extremo", "Pobre no extremo", "No pobre"}
+
+
 @router.get("/distribution")
 def distribution(indicator: str = "", level: str = "nacional", subgroup: str = "",
-                 year: int = None, format: str = "json"):
+                 year: int = None, cross_value: str = "", format: str = "json"):
     _check_format(format)
     lv, y, allowed = _resolve(indicator, level, year)
     d = CATALOG[indicator]
     if not d.get("category_var"):
         raise HTTPException(400, {"error": "indicator_not_breakdownable",
                                   "message": f"Indicator '{indicator}' has no category breakdown"})
-    data = _engine(engine.distribution, indicator, lv, subgroup, y)
+    # cross_value solo aplica a indicadores cruzables y debe ser una condición válida.
+    if cross_value:
+        if not d.get("crossable"):
+            raise HTTPException(400, {"error": "indicator_not_crossable",
+                                      "message": f"Indicator '{indicator}' does not support crosstabs"})
+        if cross_value not in POVERTY_LABELS:
+            raise HTTPException(400, {"error": "invalid_cross_value",
+                                      "message": f"cross_value '{cross_value}' is not a poverty condition",
+                                      "cross_values": sorted(POVERTY_LABELS)})
+    data = _engine(engine.distribution, indicator, lv, subgroup, y, cross_value)
     m = meta({"indicator": indicator, "title": d.get("title"), "level": lv,
-              "subgroup": subgroup or None, "year": y, "breakdown": d.get("category_var"),
+              "subgroup": subgroup or None, "cross_value": cross_value or None,
+              "year": y, "breakdown": d.get("category_var"),
               "rest_label": d.get("rest_label"), "weight": weight_of(indicator),
               "universe": UNIVERSE.get(indicator),
               "unit": "porcentaje", "format": "porcentaje", "confidence_level": 0.95,

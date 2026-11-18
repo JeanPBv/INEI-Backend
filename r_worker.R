@@ -27,7 +27,8 @@ repeat {
     list(id = id, ok = TRUE,
          data = bridge_result(req$kind %||% "", req$indicator %||% "",
                               req$level %||% "nacional", req$cross_by %||% "pobreza",
-                              as.integer(req$year %||% REF_YEAR), req$subgroup %||% "")),
+                              as.integer(req$year %||% REF_YEAR), req$subgroup %||% "",
+                              req$cross_value %||% "")),
     error = function(e) list(id = id, ok = FALSE, error = conditionMessage(e)))
   emit(res)
 }
