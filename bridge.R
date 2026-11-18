@@ -13,15 +13,20 @@ get_base <- function(year, kind = "hogar") {
   .BASES[[k]]
 }
 
-bridge_json <- function(kind, indicator = "", level = "nacional",
-                        cross_by = "pobreza", year = REF_YEAR) {
+# Devuelve el OBJETO R de la consulta (data.frame o lista), sin serializar.
+bridge_result <- function(kind, indicator = "", level = "nacional",
+                          cross_by = "pobreza", year = REF_YEAR, subgroup = "") {
   def <- .CAT[[indicator]]
   base_kind <- if (!is.null(def) && !is.null(def$base)) def$base else "hogar"
-  out <- switch(kind,
-    "catalog"  = catalog_summary(.CAT),
-    "levels"   = valid_levels(),
-    "estimate" = estimate(get_base(year, base_kind), def, level),
-    "crosstab" = crosstab(get_base(year, base_kind), def, level, cross_by),
+  switch(kind,
+    "catalog"      = catalog_summary(.CAT),
+    "levels"       = valid_levels(),
+    "estimate"     = estimate(get_base(year, base_kind), def, level),
+    "crosstab"     = crosstab(get_base(year, base_kind), def, level, cross_by),
+    "distribution" = distribution(get_base(year, base_kind), def, level, subgroup),
     stop(paste("Tipo de consulta desconocido:", kind)))
-  toJSON(out, dataframe = "rows", auto_unbox = TRUE, na = "null")
+}
+
+bridge_json <- function(...) {
+  toJSON(bridge_result(...), dataframe = "rows", auto_unbox = TRUE, na = "null")
 }

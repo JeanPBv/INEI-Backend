@@ -1,5 +1,5 @@
 # Punto de entrada del modo subprocess.
-# Uso: Rscript r_bridge.R <kind> [indicator] [level] [cross_by] [year]
+# Uso: Rscript r_bridge.R <kind> [indicator] [level] [cross_by] [year] [subgroup]
 source("config.R")
 for (f in c("R/utils.R", "R/levels.R", "R/catalog.R", "R/estimator.R")) source(f)
 source("bridge.R")
@@ -10,4 +10,4 @@ a <- commandArgs(trailingOnly = TRUE)
 g <- function(i, d) if (length(a) >= i && nzchar(a[i])) a[i] else d
 year <- suppressWarnings(as.integer(g(5, REF_YEAR)))
 if (is.na(year)) year <- REF_YEAR
-cat(bridge_json(g(1, ""), g(2, ""), g(3, "nacional"), g(4, "pobreza"), year))
+cat(bridge_json(g(1, ""), g(2, ""), g(3, "nacional"), g(4, "pobreza"), year, g(6, "")))

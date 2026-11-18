@@ -21,16 +21,21 @@ options(survey.lonely.psu = "adjust")
 }
 
 # Arma una fila de resultado a partir de la estimación y su error estándar.
+# El CV queda indefinido (NA) cuando la estimación es 0. Para proporciones, el IC
+# normal (±1.96 EE) puede salirse de [0,100]; se acota a ese rango.
 .row <- function(level, est, se, type, format) {
-  cv    <- ifelse(est != 0, (se / abs(est)) * 100, NA_real_)
+  cv    <- if (is.na(est) || est == 0) NA_real_ else (se / abs(est)) * 100
   scale <- if (format == "porcentaje") 100 else 1   # una proporción se muestra como porcentaje
+  lo    <- (est - 1.96 * se) * scale
+  hi    <- (est + 1.96 * se) * scale
+  if (format == "porcentaje") { lo <- max(lo, 0); hi <- min(hi, 100) }  # proporción ∈ [0,100]
   data.frame(
     level          = level,
     estimate       = est * scale,
     standard_error = se  * scale,
     cv             = cv,
-    ci_lower       = (est - 1.96 * se) * scale,
-    ci_upper       = (est + 1.96 * se) * scale,
+    ci_lower       = lo,
+    ci_upper       = hi,
     unreliable     = isTRUE(cv > CV_THRESHOLD),
     stringsAsFactors = FALSE
   )
@@ -98,6 +103,42 @@ crosstab <- function(base, def, level_key = "nacional", cross_by = "pobreza") {
   out$sample_size <- as.integer(cnt[out$level])
   out$population  <- NA_real_
 
+  rownames(out) <- NULL
+  out
+}
+
+# Desglose por etiquetas: estima la proporción de cada categoría de la variable
+# categórica del indicador, con su error estándar / CV / IC 95%. Si se pasa un
+# subámbito (p. ej. nivel "area" + subgroup "urbano"), restringe el cálculo a él;
+# así el drill-down "clic en Urbano -> categorías dentro de Urbano" es una sola
+# estimación con el mismo diseño muestral y el peso propio del indicador.
+distribution <- function(base, def, level_key = "nacional", subgroup = "") {
+  catvar <- def$category_var
+  if (is.null(catvar)) stop("El indicador no tiene desglose por categorias")
+  lvl <- LEVELS[[level_key]]
+
+  # Restringe al subámbito pedido dentro de la columna del nivel (área/región/dpto).
+  if (!is.null(lvl$group) && nzchar(subgroup)) {
+    col  <- as.character(base[[lvl$group]])
+    base <- base[!is.na(col) & tolower(col) == tolower(subgroup), ]
+  }
+
+  wv   <- .weight_var(def)
+  base <- base[!is.na(base[[wv]]) & !is.na(base[[catvar]]), ]
+  if (!nrow(base)) stop("No hay datos para ese subambito")
+  base[[catvar]] <- droplevels(factor(base[[catvar]]))
+
+  dsn <- svydesign(ids = ~conglome, strata = ~estrato,
+                   weights = as.formula(paste0("~", wv)), data = base, nest = TRUE)
+  est <- svymean(as.formula(paste0("~", catvar)), dsn, na.rm = TRUE)
+  cf  <- coef(est); se <- SE(est)
+  cats <- sub(paste0("^", catvar), "", names(cf))   # svymean antepone el nombre de la variable
+
+  out <- do.call(rbind, Map(function(lab, e, s)
+    .row(lab, e, s, "proporcion", "porcentaje"), cats, cf, se))
+  nm  <- table(base[[catvar]])
+  out$sample_size <- as.integer(nm[cats])
+  out$population  <- NA_real_
   rownames(out) <- NULL
   out
 }
