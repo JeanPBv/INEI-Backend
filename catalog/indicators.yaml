@@ -158,36 +158,6 @@ indicators:
     levels_allowed: [nacional, area, region_natural, departamento]
     official_source: "INEI - ENAHO Modulo 300 (Educacion)"
 
-  nivel_secundaria_completa:
-    title: "Poblacion con secundaria completa o mas (15 y mas)"
-    description: "Porcentaje de personas de 15 y mas años cuyo nivel educativo alcanzado es al menos secundaria completa"
-    module: educacion
-    base: persona
-    variable: sec_completa
-    category_var: cat_sec_comp
-    type: proporcion
-    weight_unit: persona
-    weight_var: w_edu
-    format: porcentaje
-    crossable: true
-    levels_allowed: [nacional, area, region_natural, departamento]
-    official_source: "INEI - ENAHO Modulo 300 (Educacion), nivel educativo alcanzado P301A"
-
-  nivel_superior:
-    title: "Poblacion con educacion superior (15 y mas)"
-    description: "Porcentaje de personas de 15 y mas años con algun nivel de educacion superior (no universitaria o universitaria)"
-    module: educacion
-    base: persona
-    variable: edu_superior
-    category_var: cat_superior
-    type: proporcion
-    weight_unit: persona
-    weight_var: w_edu
-    format: porcentaje
-    crossable: true
-    levels_allowed: [nacional, area, region_natural, departamento]
-    official_source: "INEI - ENAHO Modulo 300 (Educacion), nivel educativo alcanzado P301A"
-
   problema_salud_cronico:
     title: "Poblacion con algun problema de salud cronico"
     description: "Porcentaje de personas que padecen de alguna enfermedad o malestar cronico"

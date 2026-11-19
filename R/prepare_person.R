@@ -37,7 +37,7 @@ prepare_person_base <- function(year = REF_YEAR) {
     hogar = col_chr(edu, "HOGAR"), codperso = col_chr(edu, "CODPERSO"),
     edad = col_num(edu, "P208A"), p302 = col_num(edu, "P302"),
     p304a = col_num(edu, "P304A"), p307 = col_num(edu, "P307"),
-    p308a = col_num(edu, "P308A"), p301a = col_num(edu, "P301A"),
+    p308a = col_num(edu, "P308A"),
     factora07 = col_num(edu, "FACTORA07")
   ) %>% mutate(
     # Analfabeto = persona de 15+ que no sabe leer ni escribir (P302 == 2).
@@ -54,22 +54,9 @@ prepare_person_base <- function(year = REF_YEAR) {
     w_sec             = ifelse(edad %in% 12:16, factora07, NA_real_),
     cat_asis_sec = factor(ifelse(is.na(asiste_secundaria), NA_character_,
                    ifelse(asiste_secundaria == 1, "Asiste a secundaria", "No asiste a secundaria")),
-                   levels = c("Asiste a secundaria", "No asiste a secundaria")),
-    # Nivel educativo alcanzado (P301A, 15+): umbral directo sobre la variable oficial.
-    #   secundaria completa o más = P301A >= 6 ; con educación superior = P301A >= 7.
-    # Códigos P301A: 1 sin nivel, 2 inicial, 3-4 primaria inc/comp, 5-6 secundaria
-    # inc/comp, 7-8 sup. no univ inc/comp, 9-10 sup. univ inc/comp, 11 posgrado.
-    sec_completa = ifelse(edad >= 15, ifelse(is.na(p301a), NA_integer_, as.integer(p301a >= 6)), NA_integer_),
-    cat_sec_comp = factor(ifelse(is.na(sec_completa), NA_character_,
-                   ifelse(sec_completa == 1, "Con secundaria completa o más", "Sin secundaria completa")),
-                   levels = c("Con secundaria completa o más", "Sin secundaria completa")),
-    edu_superior = ifelse(edad >= 15, ifelse(is.na(p301a), NA_integer_, as.integer(p301a >= 7)), NA_integer_),
-    cat_superior = factor(ifelse(is.na(edu_superior), NA_character_,
-                   ifelse(edu_superior == 1, "Con educación superior", "Sin educación superior")),
-                   levels = c("Con educación superior", "Sin educación superior"))
+                   levels = c("Asiste a secundaria", "No asiste a secundaria"))
   ) %>% select(all_of(key4), analfabeto, w_edu, cat_alfab,
-               asiste_secundaria, w_sec, cat_asis_sec,
-               sec_completa, cat_sec_comp, edu_superior, cat_superior)
+               asiste_secundaria, w_sec, cat_asis_sec)
 
   message("Persona 3/5  Salud (400): seguro de salud y problema cronico...")
   sal <- read_sav(health_sav(year))

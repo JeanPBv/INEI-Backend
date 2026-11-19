@@ -21,8 +21,6 @@ UNIVERSE = {
     "seguro_salud":        "Personas (población total)",
     "tasa_ocupacion":      "Población en edad de trabajar (14 y más)",
     "asistencia_secundaria": "Adolescentes de 12 a 16 años",
-    "nivel_secundaria_completa": "Personas de 15 y más años",
-    "nivel_superior":        "Personas de 15 y más años",
     "problema_salud_cronico": "Personas (población total)",
     "empleo_informal":       "PEA ocupada",
     "tasa_desempleo":        "PEA (ocupados + desempleo abierto)",

@@ -13,18 +13,22 @@ prepare_base <- function(year = REF_YEAR) {
   # es decir entrevistas completas e incompletas, que también cuentan en las cifras oficiales.
   message("2/5  Estandarizando el modulo Vivienda...")
   na_si <- function(cond, base_na) ifelse(is.na(base_na), NA_integer_, as.integer(cond))
+  # El desagüe cambió de variable: P111 hasta 2011, P111A desde 2012. Las categorías
+  # de red pública = {1,2} (dentro/fuera de la vivienda) son idénticas en ambas, así
+  # que la definición del indicador no cambia; solo cambia de qué columna se lee.
+  desvar <- if (year <= 2011) "P111" else "P111A"
   viv_std <- tibble(
     conglome = col_chr(viv, "CONGLOME"),
     vivienda = col_chr(viv, "VIVIENDA"),
     hogar    = col_chr(viv, "HOGAR"),
     result   = col_num(viv, "RESULT"),
     p110     = col_num(viv, "P110"),
-    p111a    = col_num(viv, "P111A"),
+    p111a    = col_num(viv, desvar),
     p1121    = col_num(viv, "P1121"),
     # Desglose = las categorías que DEFINEN el indicador (red pública) + "Sin red
     # pública" como resto. Las del indicador suman el valor del titular.
     cat_agua    = col_fct_sel(viv, "P110",  c(1, 2, 3), rest = "Sin red pública"),  # agua: {1,2,3} = red
-    cat_desague = col_fct_sel(viv, "P111A", c(1, 2),    rest = "Sin red pública")   # desagüe: {1,2} = red
+    cat_desague = col_fct_sel(viv, desvar,  c(1, 2),    rest = "Sin red pública")   # desagüe: {1,2} = red
   ) %>%
     filter(result %in% c(1, 2)) %>%
     mutate(
