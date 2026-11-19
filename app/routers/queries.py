@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException
 from app.settings import LEVELS, CV_THRESHOLD
 from app.catalog import CATALOG, levels_allowed, UNIVERSE, weight_of
 from app.engine import engine
-from app.versions import meta
+from app.versions import meta, VERSIONS
 from app.responses import normalize_level, validate_year, respond
 
 router = APIRouter()
@@ -84,6 +84,97 @@ def crosstabs(indicator: str = "", cross_by: str = "pobreza", level: str = "naci
               "confidence_level": 0.95, "cv_threshold": CV_THRESHOLD,
               "note": "Estimates with CV>15% are flagged as unreliable"}, year=y)
     return respond(data, m, format)
+
+
+# Parsea el parámetro `years` ("2021,2022,2023") a una lista de enteros única y
+# ordenada. Acepta coma o punto y coma como separador. No valida disponibilidad
+# (eso lo hace validate_year después, por año).
+MAX_YEARS = 20
+
+
+def _parse_years(years):
+    if not years or not str(years).strip():
+        raise HTTPException(400, {"error": "missing_years",
+                                  "message": "Parámetro 'years' requerido (p. ej. years=2021,2022,2023)"})
+    out = []
+    for tok in str(years).replace(";", ",").split(","):
+        tok = tok.strip()
+        if not tok:
+            continue
+        try:
+            out.append(int(tok))
+        except ValueError:
+            raise HTTPException(400, {"error": "invalid_year",
+                                      "message": f"Año '{tok}' no es un entero válido"})
+    out = sorted(set(out))
+    if not out:
+        raise HTTPException(400, {"error": "missing_years",
+                                  "message": "No se indicó ningún año válido en 'years'"})
+    if len(out) > MAX_YEARS:
+        raise HTTPException(400, {"error": "too_many_years",
+                                  "message": f"Máximo {MAX_YEARS} años por consulta",
+                                  "max_years": MAX_YEARS})
+    return out
+
+
+# Valida indicador + nivel (sin año) y devuelve la clave de nivel y los niveles
+# permitidos. Es la parte de _resolve que no depende del año, para reusarla en
+# consultas multianuales donde el año se valida aparte.
+def _resolve_level(indicator, level):
+    if indicator not in CATALOG:
+        raise HTTPException(404, {"error": "unknown_indicator",
+                                  "message": f"Indicator '{indicator}' is not in the catalog"})
+    lv = normalize_level(level)
+    if lv not in LEVELS:
+        raise HTTPException(400, {"error": "invalid_level",
+                                  "message": f"Level '{level}' is not a valid inference level",
+                                  "valid_levels": list(LEVELS)})
+    allowed = levels_allowed(indicator)
+    if lv not in allowed:
+        raise HTTPException(422, {"error": "level_not_allowed",
+                                  "message": f"Indicator '{indicator}' is not published by {lv}: "
+                                             f"reliability (CV) does not meet the threshold at that level.",
+                                  "levels_allowed": allowed})
+    return lv, allowed
+
+
+@router.get("/series")
+def series(indicator: str = "", level: str = "nacional", years: str = "",
+           cross_by: str = "", format: str = "json"):
+    """Serie multianual: el mismo cálculo de /estimates (o /crosstabs si se pasa
+    cross_by) para varios años. Cada fila lleva su 'year'. Ej.:
+    /series?indicator=pobreza_total&level=departamento&years=2021,2022,2023"""
+    _check_format(format)
+    lv, allowed = _resolve_level(indicator, level)
+    d = CATALOG[indicator]
+    cross = bool(cross_by)
+    if cross and not d.get("crossable"):
+        raise HTTPException(400, {"error": "indicator_not_crossable",
+                                  "message": f"Indicator '{indicator}' does not support crosstabs"})
+
+    year_list = _parse_years(years)
+    for y in year_list:
+        validate_year(y)   # 404 year_unavailable si algún año no tiene datos preparados
+
+    rows = []
+    for y in year_list:
+        part = (_engine(engine.crosstab, indicator, lv, cross_by, y) if cross
+                else _engine(engine.estimate, indicator, lv, y))
+        for r in (part or []):
+            rows.append({"year": y, **r})   # 'year' primero: queda como columna en el CSV
+
+    m = meta({"indicator": indicator, "title": d.get("title"), "level": lv,
+              "years": year_list, "year": year_list[-1],
+              "data_versions": {str(y): VERSIONS.get(y, {}).get("version") for y in year_list},
+              "type": d.get("type"), "formula": d.get("type"),
+              "unit": d.get("format"), "format": d.get("format"),
+              "cross": cross_by or None, "cross_by": cross_by or None,
+              "weight": weight_of(indicator), "universe": UNIVERSE.get(indicator),
+              "confidence_level": 0.95, "cv_threshold": CV_THRESHOLD,
+              "levels_allowed": allowed,
+              "note": "Serie multianual; estimaciones con CV>15% marcadas como referenciales"},
+             year=year_list[-1])
+    return respond(rows, m, format)
 
 
 # Condiciones de pobreza válidas para el drill-down de una celda del cruce.
