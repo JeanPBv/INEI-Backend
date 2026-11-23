@@ -23,6 +23,11 @@ prepare_person_base <- function(year = REF_YEAR) {
 
   message("Persona 2/5  Educacion (300): analfabetismo, asistencia sec. y nivel alcanzado...")
   edu <- read_sav(edu_sav(year))
+  # El INEI reproyecta el factor de expansion del modulo 300 en algunos anios
+  # (sufijo _P, p. ej. 2021): lo publicado usa FACTORA_P cuando existe, si no
+  # FACTORA07. Afecta a analfabetismo y asistencia secundaria (ambos del mod. 300).
+  fac_edu_col <- if (any(toupper(names(edu)) == "FACTORA_P")) "FACTORA_P" else "FACTORA07"
+  message("     Factor del modulo 300 en uso: ", fac_edu_col)
   edu_std <- tibble(
     conglome = col_chr(edu, "CONGLOME"), vivienda = col_chr(edu, "VIVIENDA"),
     hogar = col_chr(edu, "HOGAR"), codperso = col_chr(edu, "CODPERSO"),
@@ -32,18 +37,18 @@ prepare_person_base <- function(year = REF_YEAR) {
     codinfor = col_num(edu, "CODINFOR"),   # informante válido del cap. 300
     p204 = col_num(edu, "P204"),           # ¿es miembro del hogar?
     mes  = col_num(edu, "MES"),            # mes de la entrevista (año escolar desde abril)
-    factora07 = col_num(edu, "FACTORA07")
+    fac_edu = col_num(edu, fac_edu_col)    # FACTORA_P si existe (2021), si no FACTORA07
   ) %>% mutate(
     # Tasa de analfabetismo (15+), metodología INEL/INEI (doc. Indicadores de Educación):
     #   Alfabeto  = sabe leer y escribir (P302==1) O tiene primaria completa o más (P301A 4-11).
     #   Analfabeto = declara que NO sabe leer ni escribir (P302==2).
     # El universo son solo los clasificados: un 15+ con P302 en blanco y sin primaria
-    # completa queda FUERA (NA), no se asume alfabeto. Peso factora07.
+    # completa queda FUERA (NA), no se asume alfabeto. Peso del mod. 300 (fac_edu).
     alfabeto_15 = !is.na(edad) & edad >= 15 &
                   ((p302 %in% 1) | (!is.na(p301a) & p301a >= 4 & p301a <= 11)),
     analf_15    = !is.na(edad) & edad >= 15 & (p302 %in% 2),
     analfabeto  = ifelse(alfabeto_15 | analf_15, as.integer(analf_15), NA_integer_),
-    w_edu       = ifelse(alfabeto_15 | analf_15, factora07, NA_real_),
+    w_edu       = ifelse(alfabeto_15 | analf_15, fac_edu, NA_real_),
     # Desglose del indicador (sabe / no sabe), coherente con el binario y su universo.
     cat_alfab  = factor(ifelse(is.na(analfabeto), NA_character_,
                         ifelse(analfabeto == 1, "No sabe leer ni escribir", "Sabe leer y escribir")),
@@ -53,11 +58,11 @@ prepare_person_base <- function(year = REF_YEAR) {
     #   entrevista en abril o después (MES>=4, pues el año escolar recién arranca) y
     #   edad 12-16. Asiste = asiste ACTUALMENTE (P307==1) a secundaria (P308A==3).
     # Se cuenta solo la asistencia vigente; NO se usa el nivel del año anterior.
-    # Peso factora07.
+    # Peso del mod. 300 (fac_edu: FACTORA_P si existe, si no FACTORA07).
     univ_sec          = !is.na(codinfor) & codinfor >= 1 & p204 %in% 1 &
                         !is.na(mes) & mes >= 4 & edad %in% 12:16,
     asiste_secundaria = ifelse(univ_sec, as.integer(p307 %in% 1 & p308a %in% 3), NA_integer_),
-    w_sec             = ifelse(univ_sec, factora07, NA_real_),
+    w_sec             = ifelse(univ_sec, fac_edu, NA_real_),
     cat_asis_sec = factor(ifelse(is.na(asiste_secundaria), NA_character_,
                    ifelse(asiste_secundaria == 1, "Asiste a secundaria", "No asiste a secundaria")),
                    levels = c("Asiste a secundaria", "No asiste a secundaria"))

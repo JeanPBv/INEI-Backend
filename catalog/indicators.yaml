@@ -85,17 +85,6 @@ indicators:
     levels_allowed: [nacional, area, region_natural, departamento]
     official_source: "INEI - Condiciones de vida"
 
-  total_hogares:
-    title: "Numero total de hogares"
-    description: "Estimacion del total de hogares"
-    module: vivienda
-    variable: unos
-    type: total
-    weight_unit: hogar
-    format: conteo
-    levels_allowed: [nacional, area, region_natural, departamento]
-    official_source: "INEI - ENAHO"
-
   # Indicadores a nivel de persona (base: persona).
   # Cada uno sale de su módulo y usa su propio factor de expansión (weight_var).
 

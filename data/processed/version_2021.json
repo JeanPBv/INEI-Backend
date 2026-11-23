@@ -1,9 +1,9 @@
 {
   "dataset": "ENAHO 2021 - Modulos 01 (Vivienda) y 34 (Sumaria)",
   "anio": 2021,
-  "generado": "2026-11-19T10:41:42",
+  "generado": "2026-11-22T22:39:18",
   "n_hogares": 34245,
   "n_conglome": 5359,
-  "version": "enaho2021-vivsum-20261119",
+  "version": "enaho2021-vivsum-20261122",
   "fuente": ["Enaho01-2021-100.sav", "Sumaria-2021.sav"]
 }

@@ -16,7 +16,6 @@ UNIVERSE = {
     "agua_red_publica":    "Hogares",
     "desague_red_publica": "Hogares",
     "electricidad":        "Hogares",
-    "total_hogares":       "Hogares",
     "analfabetismo":       "Personas de 15 y más años",
     "seguro_salud":        "Personas (población total)",
     "tasa_ocupacion":      "Población en edad de trabajar (14 y más)",
